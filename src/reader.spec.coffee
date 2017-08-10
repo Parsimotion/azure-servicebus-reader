@@ -36,3 +36,21 @@ describe "Reader", ->
     stubNextStream.should.be.have.calledOnce()
     stubFetch.should.be.have.calledOnce()
 
+
+  it "should be call to fetch twice times if retrieve some messages", ->
+    stubFetch = sinon.stub(reader, "_fetchMessages")
+      .onFirstCall().returns Promise.resolve [1, 2, 3]
+      .onSecondCall().returns Promise.resolve []
+
+    spyNextStream = sinon.spy(reader, "_scheduleNextStream")
+
+    runnerSpy = sinon.spy()
+    stream.each runnerSpy
+
+    clock.tick 300
+
+    runnerSpy.should.have.calledThrice()
+    stubFetch.should.have.calledTwice()
+    spyNextStream.should.have.calledTwice()
+
+

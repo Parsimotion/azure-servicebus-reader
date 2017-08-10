@@ -9,16 +9,21 @@ module.exports =
 
     construct: ->
 
-    stream: ->
+    stream: =>
       highland (push, next) =>      
         @_fetchMessages()
         .then (messages) =>
           push null, message for message in messages
-          @_scheduleNextStream()
+          @_scheduleNextStream messages.length, next
         return
 
     _fetchMessages: =>
       throw new Error "not implemented"
 
-    _scheduleNextStream: (next) => 
-      throw new Error "not implemented"
+    _scheduleNextStream: (actualAmount, next) =>
+      delayToFetch = if actualAmount is 0 then 1000 else 0
+
+      debug "_scheduleFetch in #{delayToFetch}"
+      setTimeout =>
+        next @stream()
+      , delayToFetch
