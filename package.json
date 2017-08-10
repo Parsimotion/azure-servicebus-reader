@@ -12,6 +12,7 @@
     "url": "git+https://github.com/Parsimotion/azure-servicebus-reader.git"
   },
   "dependencies": {
+    "azure-sb": "^0.10.4",
     "bluebird": "^3.5.0",
     "debug": "^2.6.8",
     "highland": "^2.11.1",

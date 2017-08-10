@@ -1,13 +1,13 @@
 _ = require "lodash"
 debug = require("debug") "azure-servicebus-reader"
-Promise = require "bluebird"
 highland = require "highland"
 
 
 module.exports =
   class Reader
 
-    construct: ->
+    construct: ({ connection }) ->
+      @service = new ServiceBusService connection
 
     stream: =>
       highland (push, next) =>      
@@ -17,8 +17,7 @@ module.exports =
           @_scheduleNextStream messages.length, next
         return
 
-    _fetchMessages: =>
-      throw new Error "not implemented"
+    _fetchMessages: => @service.fetchMessages()
 
     _scheduleNextStream: (actualAmount, next) =>
       delayToFetch = if actualAmount is 0 then 1000 else 0
