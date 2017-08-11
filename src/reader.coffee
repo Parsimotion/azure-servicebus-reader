@@ -1,5 +1,5 @@
 _ = require "lodash"
-debug = require("debug") "azure-servicebus-reader"
+debug = require("debug") "azure-servicebus-reader:reader"
 highland = require "highland"
 
 
