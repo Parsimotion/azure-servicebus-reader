@@ -6,15 +6,16 @@ highland = require "highland"
 module.exports =
   class Reader
 
-    constructor: (@service, { @logger = console } = {} ) ->
+    constructor: (@service, { @logger = console, @concurrency = 25 } = {} ) ->
 
     run: (processor) ->
       @stream()
-      .flatMap (message) =>
+      .map (message) =>
         highland (push, next) =>
           message.start()
           context = @_context { message, push }
           processor context, message.body
+      .parallel @concurrency
       .each ({ success }) -> debug "Finished message with status #{success}"
 
     stream: =>
