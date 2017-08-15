@@ -1,22 +1,25 @@
 _ = require "lodash"
 
-sinon = require "sinon"
-should = require "should"
+require "should"
 require "should-sinon"
+sinon = require "sinon"
+
 Promise = require "bluebird"
 
 Reader = require "./reader"
 
 describe "Reader", ->
 
-  { stream, reader, clock, nextStreamSpy } = {}
+  { stream, reader, clock, nextStreamSpy, processor, service } = {}
 
   beforeEach ->
     Promise.setScheduler (fn) => setTimeout fn, 0
-    reader = new Reader
+    service = fetchMessages: sinon.stub()
+    reader = new Reader service
     stream = reader.stream()
     nextStreamSpy = sinon.spy reader, "_scheduleNextStream"
     clock = sinon.useFakeTimers()
+    processor = sinon.spy()
 
   afterEach =>
     clock.restore()
@@ -26,18 +29,17 @@ describe "Reader", ->
   context "if servicebus is empty", ->
 
     emptyServiceBus = ->
-      stubFetch = sinon.stub(reader, "_fetchMessages").returns Promise.resolve []
-      runnerSpy = sinon.spy()
-      stream.each runnerSpy
+      service.fetchMessages.returns Promise.resolve []
+      stream.each processor
 
       timeToElapsed: (@time) -> @
       callsToFetchExpected: (@times) -> @
       verify: ->
         clock.tick @time
 
-        runnerSpy.should.have.not.been.called()
+        processor.should.have.not.been.called()
         nextStreamSpy.should.be.have.callCount @times
-        stubFetch.should.be.have.callCount @times
+        service.fetchMessages.should.be.have.callCount @times
 
     it "should call to fetch once if the sleep time has not elapsed yet", ->
       emptyServiceBus()
@@ -52,17 +54,14 @@ describe "Reader", ->
         .verify()
 
   it "should be call to fetch twice times if retrieve some messages", ->
-    stubFetch = sinon.stub(reader, "_fetchMessages")
+    service.fetchMessages
       .onFirstCall().returns Promise.resolve [1, 2, 3]
       .onSecondCall().returns Promise.resolve []
 
-    runnerSpy = sinon.spy()
-    stream.each runnerSpy
+    stream.each processor
 
     clock.tick 300
 
-    runnerSpy.should.have.calledThrice()
-    stubFetch.should.have.calledTwice()
+    processor.should.have.calledThrice()
+    service.fetchMessages.should.have.calledTwice()
     nextStreamSpy.should.have.calledTwice()
-
-

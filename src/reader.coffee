@@ -6,11 +6,10 @@ highland = require "highland"
 module.exports =
   class Reader
 
-    construct: ({ connection }) ->
-      @service = new ServiceBusService connection
+    constructor: (@service, { @logger = console } = {} ) ->
 
     stream: =>
-      highland (push, next) =>      
+      highland (push, next) =>
         @_fetchMessages()
         .then (messages) =>
           push null, message for message in messages
