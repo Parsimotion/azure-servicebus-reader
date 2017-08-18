@@ -15,8 +15,12 @@ module.exports =
       @stream = @_stream().flatMap @_touch
       @stream.resume()
 
+    delete: ->
+      debug "Deleting message #{@_id()}"
+      @service.deleteMessageAsync @lockedMessage
+
     stop: ->
-      debug "Stoping peek message... #{@_id()}"
+      debug "Stopping peek message... #{@_id()}"
       @stream.done => clearInterval @interval
       @stream.end()
 

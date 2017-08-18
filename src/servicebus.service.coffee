@@ -11,9 +11,12 @@ module.exports =
       @service = Promise.promisifyAll azure.createServiceBusService connection
 
     fetchMessages: =>
-      @service.receiveSubscriptionMessageAsync @topic, @subscription, isPeekLock: true
+      @_fetchFromAzure()
       .map (message) => new LockedMessage @service, message
       .map (message) => _.update message, "body", _.flow(@_sanitize, JSON.parse)
+
+    _fetchFromAzure: =>
+      @service.receiveSubscriptionMessageAsync @topic, @subscription, isPeekLock: true
 
     _sanitize: (body) ->
       # The messages come with shit before the "{" that breaks JSON.parse =|

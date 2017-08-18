@@ -8,15 +8,41 @@ module.exports =
 
     constructor: (@service, { @logger = console } = {} ) ->
 
+    run: (processor) ->
+      @stream()
+      .flatMap (message) =>
+        highland (push, next) =>
+          message.start()
+          context = @_context { message, push }
+          processor context, message.body
+      .each ({ success }) -> debug "Finished message with status #{success}"
+
     stream: =>
-      highland (push, next) =>
-        @_fetchMessages()
+      highland (push, next) =>      
+        @service.fetchMessages()
         .then (messages) =>
           push null, message for message in messages
           @_scheduleNextStream messages.length, next
         return
 
-    _fetchMessages: => @service.fetchMessages()
+    _context: ({ message, push }) =>
+      __callback = (err) -> 
+        success = not err?
+        message.stop()
+        
+        $promise = if success then message.delete() else Promise.resolve()
+
+        $promise.then ->
+          push null, { success, err, message }
+          push null, highland.nil
+
+      { brokerProperties: { EnqueuedTimeUtc, DeliveryCount } } = message
+
+      log: @logger
+      bindingData:
+        enqueuedTimeUtc: new Date EnqueuedTimeUtc
+        deliveryCount: DeliveryCount
+      done: __callback
 
     _scheduleNextStream: (actualAmount, next) =>
       delayToFetch = if actualAmount is 0 then 1000 else 0
