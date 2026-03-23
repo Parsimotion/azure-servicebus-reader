@@ -39,3 +39,7 @@ jspm_packages
 # Ignore build
 lib
 .idea
+
+site.config
+*.env
+*.env.*
